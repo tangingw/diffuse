@@ -65,8 +65,9 @@ initialModel url =
                 |> Maybe.withDefault ""
                 |> String.replace "access_token=" ""
                 |> (\t ->
-                        NewEncryptionKeyScreen
+                        NewEncryptionScreen
                             (Dropbox { token = t })
+                            Nothing
                             Nothing
                    )
 
@@ -85,8 +86,9 @@ initialModel url =
                 |> Maybe.withDefault ""
                 |> String.replace "access_token=" ""
                 |> (\t ->
-                        NewEncryptionKeyScreen
+                        NewEncryptionScreen
                             (RemoteStorage { userAddress = userAddress, token = t })
+                            Nothing
                             Nothing
                    )
 
@@ -156,11 +158,11 @@ update msg =
         RemoveEncryptionKey a ->
             removeEncryptionKey a
 
-        ShowNewEncryptionKeyScreen a ->
-            showNewEncryptionKeyScreen a
+        ShowNewEncryptionScreen a ->
+            showNewEncryptionScreen a
 
-        ShowUpdateEncryptionKeyScreen a ->
-            showUpdateEncryptionKeyScreen a
+        ShowUpdateEncryptionScreen a ->
+            showUpdateEncryptionScreen a
 
         UpdateEncryptionKey a b ->
             updateEncryptionKey a b
@@ -224,10 +226,10 @@ cancelFlow model =
             InputScreen _ _ ->
                 Unauthenticated
 
-            NewEncryptionKeyScreen _ _ ->
+            NewEncryptionScreen _ _ _ ->
                 Unauthenticated
 
-            UpdateEncryptionKeyScreen method _ ->
+            UpdateEncryptionScreen method _ _ ->
                 Authenticated method
 
             Unauthenticated ->
@@ -452,11 +454,11 @@ keepPassphraseInMemory : String -> Manager
 keepPassphraseInMemory passphrase model =
     (\state ->
         case state of
-            NewEncryptionKeyScreen method _ ->
-                NewEncryptionKeyScreen method (Just passphrase)
+            NewEncryptionScreen a b _ ->
+                NewEncryptionScreen a b (Just passphrase)
 
-            UpdateEncryptionKeyScreen method _ ->
-                UpdateEncryptionKeyScreen method (Just passphrase)
+            UpdateEncryptionScreen a b _ ->
+                UpdateEncryptionScreen a b (Just passphrase)
 
             s ->
                 s
@@ -482,14 +484,14 @@ removeEncryptionKey method model =
             Common.forceTracksRerender
 
 
-showNewEncryptionKeyScreen : Method -> Manager
-showNewEncryptionKeyScreen method =
-    replaceState (NewEncryptionKeyScreen method Nothing)
+showNewEncryptionScreen : Method -> Manager
+showNewEncryptionScreen method =
+    replaceState (NewEncryptionScreen method Nothing Nothing)
 
 
-showUpdateEncryptionKeyScreen : Method -> Manager
-showUpdateEncryptionKeyScreen method =
-    replaceState (UpdateEncryptionKeyScreen method Nothing)
+showUpdateEncryptionScreen : Method -> Manager
+showUpdateEncryptionScreen method =
+    replaceState (UpdateEncryptionScreen method Nothing Nothing)
 
 
 updateEncryptionKey : Method -> String -> Manager
@@ -548,7 +550,7 @@ pingIpfsCallback result =
         Ok _ ->
             { apiOrigin = "//localhost:5001" }
                 |> Ipfs
-                |> showNewEncryptionKeyScreen
+                |> showNewEncryptionScreen
 
         Err _ ->
             askForInput
@@ -583,7 +585,7 @@ pingOtherIpfsCallback origin result =
         Ok _ ->
             { apiOrigin = origin }
                 |> Ipfs
-                |> showNewEncryptionKeyScreen
+                |> showNewEncryptionScreen
 
         Err _ ->
             "Can't reach this IPFS API, maybe it's offline? Or I don't have access?"

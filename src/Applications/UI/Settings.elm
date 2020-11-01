@@ -247,7 +247,7 @@ changePassphrase method =
             { label = "change your passphrase"
             , onClick =
                 method
-                    |> Authentication.ShowUpdateEncryptionKeyScreen
+                    |> Authentication.ShowUpdateEncryptionScreen
                     |> AuthenticationMsg
             }
         , text "."

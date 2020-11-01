@@ -94,8 +94,18 @@ view_ state =
                                 []
                             |> speechBubble
 
-                    NewEncryptionKeyScreen _ _ ->
-                        [ text "I need a passphrase to encrypt your personal data."
+                    NewEncryptionScreen _ maybeEncryptionMethod _ ->
+                        [ case maybeEncryptionMethod of
+                            Just Biometrics ->
+                                text "Use touch or face id to encrypt your personal data."
+
+                            Just Passphrase ->
+                                text "I need a passphrase to encrypt your personal data."
+
+                            Nothing ->
+                                text "How do you want to encrypt your personal data?"
+
+                        --
                         , lineBreak
                         , inline
                             [ C.font_normal, C.text_white_60 ]
@@ -104,7 +114,7 @@ view_ state =
                             |> chunk []
                             |> speechBubble
 
-                    UpdateEncryptionKeyScreen _ _ ->
+                    UpdateEncryptionScreen _ maybeEncryptionMethod _ ->
                         [ text "I need a new passphrase to encrypt your personal data."
                         , lineBreak
                         , inline
@@ -150,17 +160,27 @@ view_ state =
             InputScreen method opts ->
                 inputScreen opts
 
-            NewEncryptionKeyScreen method pass ->
-                encryptionKeyScreen
-                    { withEncryption = SignInWithPassphrase method (Maybe.withDefault "" pass)
-                    , withoutEncryption = SignIn method
-                    }
+            NewEncryptionScreen method maybeEncryptionMethod pass ->
+                case maybeEncryptionMethod of
+                    Just encryptionMethod ->
+                        encryptionScreen
+                            { withEncryption = SignInWithPassphrase method (Maybe.withDefault "" pass)
+                            , withoutEncryption = SignIn method
+                            }
 
-            UpdateEncryptionKeyScreen method pass ->
-                encryptionKeyScreen
-                    { withEncryption = UpdateEncryptionKey method (Maybe.withDefault "" pass)
-                    , withoutEncryption = RemoveEncryptionKey method
-                    }
+                    Nothing ->
+                        chooseEncryptionMethodScreen
+
+            UpdateEncryptionScreen method maybeEncryptionMethod pass ->
+                case maybeEncryptionMethod of
+                    Just encryptionMethod ->
+                        encryptionScreen
+                            { withEncryption = UpdateEncryptionKey method (Maybe.withDefault "" pass)
+                            , withoutEncryption = RemoveEncryptionKey method
+                            }
+
+                    Nothing ->
+                        chooseEncryptionMethodScreen
 
             Unauthenticated ->
                 choicesScreen
@@ -247,7 +267,7 @@ choicesScreen =
         , C.dark__bg_darkest_hour
         ]
         [ choiceButton
-            { action = ShowNewEncryptionKeyScreen Local
+            { action = ShowNewEncryptionScreen Local
             , icon = Icons.web
             , infoLink = Nothing
             , label = "My Browser"
@@ -390,11 +410,41 @@ choiceButton { action, icon, infoLink, label, outOfOrder } =
 
 
 
--- ENCRYPTION KEY
+-- ENCRYPTION
 
 
-encryptionKeyScreen : { withEncryption : Authentication.Msg, withoutEncryption : Authentication.Msg } -> Html Authentication.Msg
-encryptionKeyScreen { withEncryption, withoutEncryption } =
+chooseEncryptionMethodScreen : Html Authentication.Msg
+chooseEncryptionMethodScreen =
+    Html.div
+        [ C.bg_white
+        , C.rounded
+        , C.px_4
+        , C.py_2
+        , C.w_64
+
+        -- Dark mode
+        ------------
+        , C.dark__bg_darkest_hour
+        ]
+        [ choiceButton
+            { action = Authentication.Bypass
+            , icon = Icons.fingerprint
+            , infoLink = Just "https://www.imore.com/face-id-vs-touch-id-whats-difference"
+            , label = "Touch or Face ID"
+            , outOfOrder = False
+            }
+        , choiceButton
+            { action = Authentication.Bypass
+            , icon = Icons.keyboard
+            , infoLink = Just "https://en.wikipedia.org/wiki/Passphrase"
+            , label = "Passphrase"
+            , outOfOrder = False
+            }
+        ]
+
+
+encryptionScreen : { withEncryption : Authentication.Msg, withoutEncryption : Authentication.Msg } -> Html Authentication.Msg
+encryptionScreen { withEncryption, withoutEncryption } =
     slab
         Html.form
         [ onSubmit withEncryption ]

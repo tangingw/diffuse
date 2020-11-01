@@ -17,10 +17,10 @@ extractMethod state =
         InputScreen method _ ->
             Just method
 
-        NewEncryptionKeyScreen method _ ->
+        NewEncryptionScreen method _ _ ->
             Just method
 
-        UpdateEncryptionKeyScreen method _ ->
+        UpdateEncryptionScreen method _ _ ->
             Just method
 
         Unauthenticated ->

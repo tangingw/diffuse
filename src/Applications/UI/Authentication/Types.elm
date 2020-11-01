@@ -1,4 +1,4 @@
-module UI.Authentication.Types exposing (Msg(..), Question, State(..))
+module UI.Authentication.Types exposing (EncryptionMethod(..), Msg(..), Question, State(..))
 
 import Html.Events.Extra.Mouse as Mouse
 import Http
@@ -14,10 +14,15 @@ import User.Layer.Methods.RemoteStorage as RemoteStorage
 type State
     = Authenticated Method
     | InputScreen Method Question
-    | NewEncryptionKeyScreen Method (Maybe String)
-    | UpdateEncryptionKeyScreen Method (Maybe String)
+    | NewEncryptionScreen Method (Maybe EncryptionMethod) (Maybe String)
+    | UpdateEncryptionScreen Method (Maybe EncryptionMethod) (Maybe String)
     | Unauthenticated
     | Welcome
+
+
+type EncryptionMethod
+    = Biometrics
+    | Passphrase
 
 
 type alias Question =
@@ -51,8 +56,8 @@ type Msg
     | KeepPassphraseInMemory String
     | MissingSecretKey Json.Value
     | RemoveEncryptionKey Method
-    | ShowNewEncryptionKeyScreen Method
-    | ShowUpdateEncryptionKeyScreen Method
+    | ShowNewEncryptionScreen Method
+    | ShowUpdateEncryptionScreen Method
     | UpdateEncryptionKey Method String
       -----------------------------------------
       -- IPFS
